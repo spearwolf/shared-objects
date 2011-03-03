@@ -1,5 +1,8 @@
 var http = require('http'),
     io = require('socket.io'),  // for npm, otherwise use require('./path/to/socket.io')
+    url = require("url"),  
+    path = require("path"),  
+    fs = require("fs"),
     _ = require('./underscore'),
     SharedObjects = require('./shared-objects');
 
