@@ -15,6 +15,7 @@ socket.on('connection', function(client) {
 
     var co = SharedObjects.ClientObject.Create(client.sessionId, client);
     client.send(JSON.stringify({ hello: co }));
+    SharedObjects.ClientObject.BroadcastAll();
 
     client.on('message', function(data) {
         var jsonData, clientHandle;
