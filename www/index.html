@@ -2,12 +2,12 @@
 <html>
   <head>
     <title>shared objects with socket.io</title>
-    <script src="http://spearwolf.no.de/socket.io/socket.io.js"></script> 
-    <script src="jquery-1.4.4.min.js"></script> 
+    <script src="/socket.io/socket.io.js"></script> 
+    <script src="/jquery-1.4.4.min.js"></script> 
     <script> 
       var socket = new io.Socket("spearwolf.no.de", { port: 80 }); 
       socket.connect();
-      socket.on('connect', function() { console.info("connect", arguments); }) 
+      socket.on('connect', function() { console.info("connect", arguments); });
       socket.on('message', function(data) {
         var msg = JSON.parse(data);
         if ("exception" in msg) {
@@ -15,8 +15,11 @@
         } else {
           console.info("message", msg);
         }
-      }) 
-      socket.on('disconnect', function() { console.info("disconnect", arguments); }) 
+        if ("count" in msg) {
+          jQuery(".client-count").html("[ <strong>"+msg.count+"</strong> clients currently connected .. ]");
+        }
+      });
+      socket.on('disconnect', function() { console.info("disconnect", arguments); });
 
       jQuery(function($) {
         $("#send-message").click(function() {
@@ -29,6 +32,8 @@
     <h3>It works!</h3>
     <p>
       please look into your javascript console
+    </p>
+    <p class="client-count">
     </p>
     <p>
       <label for="message">json:</label>

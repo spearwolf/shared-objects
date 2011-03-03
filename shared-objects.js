@@ -1,8 +1,12 @@
 var _ = require('./underscore'),
-    clientObjects = {};  // our lite in-memory database for shared client objects
+    clientObjects = {},  // our lite in-memory database for shared client objects
+    clientCount = 0;
 
 function ClientObject_create(sessionId, socket) {
     var co = { sessionId: sessionId };
+    if (_.isUndefined(clientObjects[sessionId])) {
+        ++clientCount;
+    }
     clientObjects[sessionId] = { clientObject: co, socket: socket };
     return co;
 }
@@ -14,6 +18,9 @@ function ClientObject_update(sessionId, properties) {
 }
 
 function ClientObject_destroy(sessionId) {
+    if (!_.isUndefined(clientObjects[sessionId])) {
+        --clientCount;
+    }
     delete clientObjects[sessionId];
 }
 
@@ -21,7 +28,8 @@ function BroadcastClientObjects() {
     var data = JSON.stringify({
         shared_objects: _.map(clientObjects, function(client) {
             return client.clientObject;
-        })
+        }),
+        count: clientCount
     });
     _.each(clientObjects, function(client) {
         client.socket.send(data);
@@ -41,7 +49,8 @@ exports.ClientObject = {
     Get: function(sessionId) { return clientObjects[sessionId].clientObject; },
     Update: ClientObject_update,
     Destroy: ClientObject_destroy,
-    BroadcastAll: BroadcastClientObjects
+    BroadcastAll: BroadcastClientObjects,
+    Count: function() { return clientCount; }
 };
 
 exports.ClientHandle = {
