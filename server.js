@@ -3,9 +3,28 @@ var http = require('http'),
     _ = require('./underscore'),
     SharedObjects = require('./shared-objects');
 
-var server = http.createServer(function(req, res) {
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    res.end('<h3>It works!</h3>');
+var server = http.createServer(function(request, response) {
+    var uri = url.parse(request.url).pathname;  
+    var filename = path.join(process.cwd(), uri);  
+    path.exists(filename, function(exists) {  
+        if (!exists) {  
+            response.sendHeader(404, {"Content-Type": "text/plain"});  
+            response.write("404 Not Found\n");  
+            response.close();  
+            return;  
+        }  
+        fs.readFile(filename, "binary", function(err, file) {  
+            if (err) {  
+                response.sendHeader(500, {"Content-Type": "text/plain"});  
+                response.write(err + "\n");  
+                response.close();  
+                return;  
+            }  
+            response.sendHeader(200);  
+            response.write(file, "binary");  
+            response.close();  
+        });  
+    });  
 });
 server.listen(80);
 
