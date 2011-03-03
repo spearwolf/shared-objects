@@ -1,33 +1,18 @@
 var http = require('http'),
-    io = require('socket.io'),  // for npm, otherwise use require('./path/to/socket.io')
-    url = require("url"),  
-    path = require("path"),  
-    fs = require("fs"),
-    _ = require('./underscore'),
-    SharedObjects = require('./shared-objects');
+    path = require('path'),
 
-var server = http.createServer(function(request, response) {
-    var uri = url.parse(request.url).pathname;  
-    var filename = path.join(process.cwd(), uri);  
-    path.exists(filename, function(exists) {  
-        if (!exists) {  
-            response.writeHeader(404, {"Content-Type": "text/plain"});  
-            response.write("404 Not Found\n");  
-            response.close();  
-            return;  
-        }  
-        fs.readFile(filename, "binary", function(err, file) {  
-            if (err) {  
-                response.writeHeader(500, {"Content-Type": "text/plain"});  
-                response.write(err + "\n");  
-                response.close();  
-                return;  
-            }  
-            response.writeHeader(200);  
-            response.write(file, "binary");  
-            response.close();  
-        });  
-    });  
+    io = require('socket.io'),  // for npm, otherwise use require('./path/to/socket.io')
+    paperboy = require('paperboy'),
+
+    _ = require('./underscore'),
+    SharedObjects = require('./shared-objects'),
+
+    WEBROOT = path.join(path.dirname(__filename), 'www');
+
+var server = http.createServer(function(req, res) {
+    paperboy
+        .deliver(WEBROOT, req, res)
+        .addHeader('X-PaperRoute', 'Node');
 });
 server.listen(80);
 
