@@ -16,7 +16,7 @@
           console.info("message", msg);
         }
         if ("count" in msg) {
-          jQuery(".client-count").html("[ <strong>"+msg.count+"</strong> clients currently connected .. ]");
+          jQuery(".client-count").html("[ <strong>"+msg.count+"</strong> client"+(msg.count == 1 ? '' : 's')+" currently connected .. ]");
         }
       });
       socket.on('disconnect', function() { console.info("disconnect", arguments); });
@@ -30,10 +30,10 @@
   </head>
   <body>
     <h3>It works!</h3>
+    <p class="client-count">
+    </p>
     <p>
       please look into your javascript console
-    </p>
-    <p class="client-count">
     </p>
     <p>
       <label for="message">json:</label>
