@@ -3,7 +3,7 @@ var _ = require('./underscore'),
     clientCount = 0;
 
 function ClientObject_create(sessionId, socket) {
-    var co = { sessionId: sessionId };
+    var co = { sessionId: sessionId, updatedAt: new Date() };
     if (_.isUndefined(clientObjects[sessionId])) {
         ++clientCount;
     }
@@ -14,6 +14,8 @@ function ClientObject_create(sessionId, socket) {
 function ClientObject_update(sessionId, properties) {
     var co = clientObjects[sessionId].clientObject;
     _.extend(co, properties);
+    co.sessionId = sessionId;  // never allow clients to modify the sessionId!
+    co.updatedAt = new Date();
     return co;
 }
 
