@@ -86,13 +86,16 @@
         FB.init({appId: '168520253200762', status: true, cookie: true, xfbml: true});
 
         FB.Event.subscribe('auth.login', function(response) {
-          console.log('auth.login', response);
+          console.info('auth.login', response);
         });
         FB.Event.subscribe('auth.logout', function(response) {
-          console.log('auth.logout', response);
+          console.info('auth.logout', response);
         });
         FB.Event.subscribe('auth.sessionChange', function(response) {
-          console.log('auth.sessionChange', response.session);
+          console.info('auth.sessionChange', response.session);
+        });
+        FB.Event.subscribe('auth.statusChange', function(response) {
+          console.info('auth.statusChange', response);
         });
       };
       (function() {
