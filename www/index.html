@@ -86,16 +86,24 @@
         FB.init({appId: '168520253200762', status: true, cookie: true, xfbml: true});
 
         FB.Event.subscribe('auth.login', function(response) {
-          console.info('auth.login', response);
+          console.info('FB auth.login', response);
         });
         FB.Event.subscribe('auth.logout', function(response) {
-          console.info('auth.logout', response);
+          console.info('FB auth.logout', response);
         });
         FB.Event.subscribe('auth.sessionChange', function(response) {
-          console.info('auth.sessionChange', response.session);
+          console.info('FB auth.sessionChange', response.session);
         });
         FB.Event.subscribe('auth.statusChange', function(response) {
-          console.info('auth.statusChange', response);
+          console.info('FB auth.statusChange', response);
+        });
+
+        FB.getLoginStatus(function(response) {
+          if (response.session) {
+            console.info("FB logged in and connected user, someone you know:", response.session);
+          } else {
+            console.info("FB no user session available, someone you dont know:", response);
+          }
         });
       };
       (function() {
