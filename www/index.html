@@ -2,8 +2,40 @@
 <html>
   <head>
     <title>shared objects with socket.io</title>
-    <script src="/socket.io/socket.io.js"></script> 
-    <script src="/jquery-1.4.4.min.js"></script> 
+    <style type="text/css" media="screen"> 
+      body {
+        overflow-x: hidden;
+      }
+      /* ribbon styles shameless stolen from http://unindented.org/articles/2009/10/github-ribbon-using-css-transforms/ */
+      .ribbon {
+        background-color: #a00;
+        overflow: hidden;
+        /* top left corner */
+        position: absolute;
+        right: -3em;
+        top: 2.5em;
+        /* 45 deg ccw rotation */
+        -moz-transform: rotate(45deg);
+        -webkit-transform: rotate(45deg);
+        /* shadow */
+        -moz-box-shadow: 0 0 1em #888;
+        -webkit-box-shadow: 0 0 1em #888;
+      }
+      .ribbon a {
+        border: 1px solid #faa;
+        color: #fff;
+        display: block;
+        font: bold 81.25% 'Helvetiva Neue', Helvetica, Arial, sans-serif;
+        margin: 0.05em 0 0.075em 0;
+        padding: 0.5em 3.5em;
+        text-align: center;
+        text-decoration: none;
+        /* shadow */
+        text-shadow: 0 0 0.5em #444;
+      }
+    </style> 
+    <script src="http://spearwolf.no.de/socket.io/socket.io.js"></script> 
+    <script src="http://spearwolf.no.de/jquery-1.4.4.min.js"></script> 
     <script> 
       var socket = new io.Socket("spearwolf.no.de", { port: 80 }); 
       socket.connect();
@@ -40,5 +72,7 @@
       <input id="message" name="message" type="text"/>
       <button id="send-message">send</button>
     </p>
+
+    <div class="ribbon"><a href="https://github.com/spearwolf/shared-objects">Fork me on GitHub</a></div> 
   </body>
 </html>
