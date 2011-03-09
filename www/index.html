@@ -84,6 +84,16 @@
     <script>
       window.fbAsyncInit = function() {
         FB.init({appId: '168520253200762', status: true, cookie: true, xfbml: true});
+
+        FB.Event.subscribe('auth.login', function(response) {
+          console.log('auth.login', response);
+        });
+        FB.Event.subscribe('auth.logout', function(response) {
+          console.log('auth.logout', response);
+        });
+        FB.Event.subscribe('auth.sessionChange', function(response) {
+          console.log('auth.sessionChange', response.session);
+        });
       };
       (function() {
         var e = document.createElement('script');
