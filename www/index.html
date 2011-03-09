@@ -73,6 +73,27 @@
       <button id="send-message">send</button>
     </p>
 
+    <!-- fork me -->
     <div class="ribbon"><a href="https://github.com/spearwolf/shared-objects">Fork me on GitHub</a></div> 
+
+    <!-- fb -->
+    <p><fb:login-button autologoutlink="true"></fb:login-button></p>
+    <p><fb:like></fb:like></p>
+
+    <div id="fb-root"></div>
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({appId: '168520253200762', status: true, cookie: true, xfbml: true});
+      };
+      (function() {
+        var e = document.createElement('script');
+        e.type = 'text/javascript';
+        e.src = document.location.protocol +
+          '//connect.facebook.net/de_DE/all.js';
+        e.async = true;
+        document.getElementById('fb-root').appendChild(e);
+      }());
+    </script>
+    
   </body>
 </html>
