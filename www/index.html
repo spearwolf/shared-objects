@@ -89,14 +89,13 @@
       window.fbAsyncInit = function() {
         FB.init({appId: '168520253200762', status: true, cookie: true, xfbml: true});
 
-        function fb_me(data) {
-          console.log("fb_me", data);
-          FB.api('/me', function(response) { jQuery(document).trigger("fb:me", [data]); });
+        function fb_me() {
+          FB.api('/me', function(response) { jQuery(document).trigger("fb:me", [response]); });
         }
 
         FB.Event.subscribe('auth.login', function(response) {
           console.info('FB auth.login', response);
-          fb_me(response);
+          fb_me();
         });
         FB.Event.subscribe('auth.logout', function(response) {
           console.info('FB auth.logout', response);
@@ -111,7 +110,7 @@
         FB.getLoginStatus(function(response) {
           if (response.session) {
             console.info("FB logged in and connected user, someone you know:", response.session);
-            fb_me(response);
+            fb_me();
             
           } else {
             console.info("FB no user session available, someone you dont know:", response);
