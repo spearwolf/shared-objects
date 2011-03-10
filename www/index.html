@@ -59,7 +59,7 @@
         });
 
         $(document).bind("fb:me", function(me) {
-            console.info("hello", me.name);
+            console.info("hello", me, me.name);
         });
       });
     </script> 
@@ -89,13 +89,13 @@
       window.fbAsyncInit = function() {
         FB.init({appId: '168520253200762', status: true, cookie: true, xfbml: true});
 
-        function fb_me() {
-          FB.api('/me', function(response) { jQuery(document).trigger("fb:me", response); });
+        function fb_me(data) {
+          FB.api('/me', function(response) { jQuery(document).trigger("fb:me", data); });
         }
 
         FB.Event.subscribe('auth.login', function(response) {
           console.info('FB auth.login', response);
-          fb_me();
+          fb_me(response);
         });
         FB.Event.subscribe('auth.logout', function(response) {
           console.info('FB auth.logout', response);
@@ -110,7 +110,7 @@
         FB.getLoginStatus(function(response) {
           if (response.session) {
             console.info("FB logged in and connected user, someone you know:", response.session);
-            fb_me();
+            fb_me(response);
             
           } else {
             console.info("FB no user session available, someone you dont know:", response);
