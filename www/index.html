@@ -58,8 +58,8 @@
             socket.send($("#message").val());
         });
 
-        $(document).bind("fb:me", function(me) {
-            console.info("hello", me, me.name);
+        $(document).bind("fb:me", function(_, me) {
+            console.info("hello", me);
         });
       });
     </script> 
