@@ -59,7 +59,12 @@
         });
 
         $(document).bind("fb:me", function(_, me) {
-            console.info("hello", me);
+            console.info("hello", me.name, me);
+            socket.send('{"name":"'+me.name+'"}');
+            $("body > h3:first").html("Hello " + me.name);
+        });
+        $(document).bind("fb:logout", function(_, me) {
+            $("body > h3:first").html("It works!");
         });
       });
     </script> 
@@ -99,6 +104,7 @@
         });
         FB.Event.subscribe('auth.logout', function(response) {
           console.info('FB auth.logout', response);
+          jQuery(document).trigger("fb:logout");
         });
         FB.Event.subscribe('auth.sessionChange', function(response) {
           console.info('FB auth.sessionChange', response.session);
