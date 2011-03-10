@@ -90,7 +90,8 @@
         FB.init({appId: '168520253200762', status: true, cookie: true, xfbml: true});
 
         function fb_me(data) {
-          FB.api('/me', function(response) { jQuery(document).trigger("fb:me", data); });
+          console.log("fb_me", data);
+          FB.api('/me', function(response) { jQuery(document).trigger("fb:me", [data]); });
         }
 
         FB.Event.subscribe('auth.login', function(response) {
