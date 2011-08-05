@@ -27,19 +27,19 @@ function ClientObject_destroy(sessionId) {
 }
 
 function BroadcastClientObjects() {
-    var data = JSON.stringify({
+    var data = {
         shared_objects: _.map(clientObjects, function(client) {
             return client.clientObject;
         }),
         count: clientCount
-    });
+    };
     _.each(clientObjects, function(client) {
-        client.socket.send(data);
+        client.socket.json.send(data);
     });
 }
 
 function SendException(sessionId, description, exception) {
-    clientObjects[sessionId].socket.send(JSON.stringify({ exception: { description: description, exception: exception }}));
+    clientObjects[sessionId].socket.json.send({ exception: { description: description, exception: exception }});
 }
 
 

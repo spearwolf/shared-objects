@@ -1,7 +1,7 @@
 var http = require('http'),
     path = require('path'),
 
-    io = require('socket.io'),  // for npm, otherwise use require('./path/to/socket.io')
+    socket_io = require('socket.io'),  // for npm, otherwise use require('./path/to/socket.io')
     paperboy = require('paperboy'),
 
     _ = require('./underscore'),
@@ -14,14 +14,17 @@ var server = http.createServer(function(req, res) {
         .deliver(WEBROOT, req, res)
         .addHeader('X-PaperRoute', 'Node');
 });
-server.listen(80);
+server.listen(80);  //8000);
 
-// socket.io
-var socket = io.listen(server);
-socket.on('connection', function(client) {
+// initialize socket.io server
+//
+var io = socket_io.listen(server);
+io.sockets.on('connection', function(client) {
 
-    var co = SharedObjects.ClientObject.Create(client.sessionId, client);
-    client.send(JSON.stringify({ hello: co }));
+    var sessionId = client.id,
+        co = SharedObjects.ClientObject.Create(sessionId, client);
+
+    client.json.send({ hello: co });
     SharedObjects.ClientObject.BroadcastAll();
 
     client.on('message', function(data) {
@@ -31,20 +34,20 @@ socket.on('connection', function(client) {
 
         } catch (jsonError) {
             //console.log("Invalid JSON: "+data);
-            SharedObjects.SendException(client.sessionId, "Invalid JSON: "+data, jsonError);
+            SharedObjects.SendException(sessionId, "Invalid JSON: "+data, jsonError);
         }
         try {
-            SharedObjects.ClientObject.Update(client.sessionId, jsonData);
+            SharedObjects.ClientObject.Update(sessionId, jsonData);
             SharedObjects.ClientObject.BroadcastAll();
 
         } catch (error) {
             //console.log("Error: "+error);
-            SharedObjects.SendException(client.sessionId, "Error: "+error, error);
+            SharedObjects.SendException(sessionId, "Error: "+error, error);
         }
     });
 
     client.on('disconnect', function() {
-        SharedObjects.ClientObject.Destroy(client.sessionId);
+        SharedObjects.ClientObject.Destroy(sessionId);
         SharedObjects.ClientObject.BroadcastAll();
     });
 });
