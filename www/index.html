@@ -48,7 +48,7 @@
 
             'on update': function(shared_objects) {
                 console.info("received shared objects update", shared_objects);
-                jQuery(".client-count").html("[ <strong>"+shared_objects.count+"</strong> client"+(shared_objects.count == 1 ? '' : 's')+" currently connected .. ]");
+                _E.emit("shared_objects/update/count", shared_objects.count);
             },
 
             'on disconnect': function() { console.warn("disconnected from server."); },
@@ -62,8 +62,12 @@
 
         jQuery(function($) {
 
+            _E.on("shared_objects/update/count", function(count) {
+                $(".client-count").html("[ <strong>"+count+"</strong> client"+(count == 1 ? '' : 's')+" currently connected .. ]");
+            });
+
             $("#send-message").click(function() {
-                _E.emit("shared_objects/send", $("#message").val());
+                SharedObjects.Update($("#message").val());
             });
 
             $(document).bind("fb:me", function(_, me) {
@@ -101,6 +105,7 @@
 
     <div id="fb-root"></div>
     <script>
+        /*
       window.fbAsyncInit = function() {
         FB.init({appId: '168520253200762', status: true, cookie: true, xfbml: true});
 
@@ -141,6 +146,7 @@
         e.async = true;
         document.getElementById('fb-root').appendChild(e);
       }());
+      */
     </script>
     
   </body>
