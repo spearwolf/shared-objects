@@ -5,7 +5,7 @@ var http = require('http'),
     paperboy = require('paperboy'),
 
     _ = require('./underscore'),
-    SharedObjects = require('./shared-objects'),
+    SharedObjects = require('./shared-objects-min'),
 
     WEBROOT = path.join(path.dirname(__filename), 'www');
 

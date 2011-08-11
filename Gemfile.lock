@@ -1,0 +1,28 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    POpen4 (0.1.4)
+      Platform (>= 0.4.0)
+      open4
+    Platform (0.4.0)
+    closure-compiler (1.1.1)
+    coffee-script (2.2.0)
+      coffee-script-source
+      execjs
+    coffee-script-source (1.1.2)
+    execjs (1.2.4)
+      multi_json (~> 1.0)
+    multi_json (1.0.3)
+    open4 (1.1.0)
+    smart_colored (1.0.2)
+    yui-compressor (0.9.6)
+      POpen4 (>= 0.1.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  closure-compiler (>= 1.1.1)
+  coffee-script (>= 2.2.0)
+  smart_colored (>= 1.0.2)
+  yui-compressor (>= 0.9.6)

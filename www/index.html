@@ -34,16 +34,12 @@
         text-shadow: 0 0 0.5em #444;
       }
     </style> 
-    <script src="http://spearwolf.no.de/socket.io/socket.io.js"></script>
+    <script src="socket.io/socket.io.js"></script>
     <script src="jquery-1.4.4.min.js"></script> 
     <script> 
-      //var socket = io.connect("http://localhost:8000"); 
       var socket = io.connect(); 
-      //socket.connect();
       socket.on('connect', function() { console.info("connect", arguments); });
-      //socket.on('message', function(data) {
       socket.on('message', function(msg) {
-        //var msg = JSON.parse(data);
         if ("exception" in msg) {
           console.error(msg.exception.description, msg.exception.exception);
         } else {
