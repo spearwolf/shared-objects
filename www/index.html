@@ -36,35 +36,47 @@
     </style> 
     <script src="socket.io/socket.io.js"></script>
     <script src="jquery-1.4.4.min.js"></script> 
+    <script src="custom_event-min.js"></script> 
+    <script src="shared-objects-client-min.js"></script> 
     <script> 
-      var socket = io.connect(); 
-      socket.on('connect', function() { console.info("connect", arguments); });
-      socket.on('message', function(msg) {
-        if ("exception" in msg) {
-          console.error(msg.exception.description, msg.exception.exception);
-        } else {
-          console.info("message", msg);
-        }
-        if ("count" in msg) {
-          jQuery(".client-count").html("[ <strong>"+msg.count+"</strong> client"+(msg.count == 1 ? '' : 's')+" currently connected .. ]");
-        }
-      });
-      socket.on('disconnect', function() { console.info("disconnect", arguments); });
 
-      jQuery(function($) {
-        $("#send-message").click(function() {
-            socket.send($("#message").val());
+        _E.Module("shared_objects", {
+
+            'on connect': function(data) {
+                console.info("established connection to socket.io server, sessionId =", data.sessionId);
+            },
+
+            'on update': function(shared_objects) {
+                console.info("received shared objects update", shared_objects);
+                jQuery(".client-count").html("[ <strong>"+shared_objects.count+"</strong> client"+(shared_objects.count == 1 ? '' : 's')+" currently connected .. ]");
+            },
+
+            'on disconnect': function() { console.warn("disconnected from server."); },
+
+            'on error': function(description, exception) {
+                alert("Got Error: " + description + "\n\n" + exception);
+            }
         });
 
-        $(document).bind("fb:me", function(_, me) {
-            console.info("hello", me.name, me);
-            socket.send('{"name":"'+me.name+'"}');
-            $("body > h3:first").html("Hello " + me.name);
+        SharedObjects.Connect();
+
+        jQuery(function($) {
+
+            $("#send-message").click(function() {
+                _E.emit("shared_objects/send", $("#message").val());
+            });
+
+            $(document).bind("fb:me", function(_, me) {
+                console.info("hello", me.name, me);
+                socket.send('{"name":"'+me.name+'"}');
+                $("body > h3:first").html("Hello " + me.name);
+            });
+
+            $(document).bind("fb:logout", function(_, me) {
+                $("body > h3:first").html("It works!");
+            });
         });
-        $(document).bind("fb:logout", function(_, me) {
-            $("body > h3:first").html("It works!");
-        });
-      });
+
     </script> 
   </head>
   <body>

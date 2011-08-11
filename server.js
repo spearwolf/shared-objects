@@ -14,7 +14,12 @@ var server = http.createServer(function(req, res) {
         .deliver(WEBROOT, req, res)
         .addHeader('X-PaperRoute', 'Node');
 });
-server.listen(80);  //8000);
+
+var listenPort = 80;
+if (process.argv.length >= 4 && process.argv[2] === '-p') {
+    listenPort = parseInt(process.argv[3], 10);
+}
+server.listen(listenPort);
 
 // initialize socket.io server
 //
