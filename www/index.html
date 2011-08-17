@@ -42,11 +42,11 @@
 
         SharedObjects.On({
 
-            Create: function(id) { console.log("new SharedObject:", id); },
+            create: function(id) { console.log("new SharedObject:", id); },
 
-            Update: function() { console.log("SharedObject#" + this.data.sessionId, "updated", this); },
+            update: function() { console.log("SharedObject#" + this.data.sessionId, "updated", this); },
 
-            Destroy: function()  { console.log("SharedObject#" + this.data.sessionId, "destroyed"); }
+            destroy: function()  { console.log("SharedObject#" + this.data.sessionId, "destroyed"); }
         });
 
 

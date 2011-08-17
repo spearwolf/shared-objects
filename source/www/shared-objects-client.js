@@ -50,20 +50,6 @@ window.SharedObjects = (function(){
         }
     }
 
-    function update(target, source) {
-        var attr;
-        for (attr in source) {
-            if (source.hasOwnProperty(attr)) {
-                target[attr] = source[attr];
-            }
-        }
-    }
-
-    function SharedObj(extension, data) {
-        update(this, extension);
-        this.data = data;
-    }
-
     return {
         Connect: function() {
             socket = io.connect(); 
@@ -117,10 +103,13 @@ window.SharedObjects = (function(){
             return _E.Module(E_NAMESPACE, {
 
                 'on new ..': function(id, data) {
-                    var so = new SharedObj(extension, data);
+                    function SharedObj() {}
+                    SharedObj.prototype = typeof extension === 'function' ? new extension : extension;
+                    var so = new SharedObj();
+                    so.data = data;
                     shared_objects_extended[id] = so;
-                    if (typeof so.Create === 'function') {
-                        so.Create(id);
+                    if (typeof so.create === 'function') {
+                        so.create(id);
                     }
                 },
 
@@ -128,8 +117,8 @@ window.SharedObjects = (function(){
                     var so = shared_objects_extended[id];
                     if (so) {
                         so.data = data;
-                        if (typeof so.Update === 'function') {
-                            so.Update();
+                        if (typeof so.update === 'function') {
+                            so.update();
                         }
                     }
                 },
@@ -137,8 +126,8 @@ window.SharedObjects = (function(){
                 'on delete ..': function(id) {
                     var so = shared_objects_extended[id];
                     if (so) {
-                        if (typeof so.Destroy === 'function') {
-                            so.Destroy();
+                        if (typeof so.destroy === 'function') {
+                            so.destroy();
                         }
                         delete shared_objects_extended[id];
                     }
