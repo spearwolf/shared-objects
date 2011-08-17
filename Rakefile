@@ -9,6 +9,7 @@ end
 
 desc "Start local node server instance"
 task :server do
+  puts "#{'Running'.green} shared objects server at #{'http://localhost:8000/'.bold}"
   exec %(node ./server.js -p 8000)
 end
 

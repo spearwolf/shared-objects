@@ -40,16 +40,39 @@
     <script src="shared-objects-client-min.js"></script> 
     <script> 
 
+        SharedObjects.On({
+
+            Create: function(id) { console.log("new SharedObject:", id); },
+
+            Update: function() { console.log("SharedObject#" + this.data.sessionId, "updated", this); },
+
+            Destroy: function()  { console.log("SharedObject#" + this.data.sessionId, "destroyed"); }
+        });
+
+
         _E.Module("shared_objects", {
 
             'on connect': function(data) {
-                console.info("established connection to socket.io server, sessionId =", data.sessionId);
+                console.info("established connection to socket.io server, your public sessionId is", data.sessionId);
             },
 
-            'on update': function(shared_objects) {
-                console.info("received shared objects update", shared_objects);
-                _E.emit("shared_objects/update/count", shared_objects.count);
+            'on data': function(shared_objects) {
+                _E.emit("shared_objects/count", shared_objects.count);
             },
+
+            /* {{{
+            'on new ..': function(id, shared_object) {
+                console.info("received new shared object, id =", id, ", so =", shared_object);
+            },
+
+            'on update ..': function(id, shared_object) {
+                console.info("received shared object update, id =", id, ", so =", shared_object);
+            },
+
+            'on delete ..': function(id, shared_object) {
+                console.info("received shared object deletion, id =", id, ", so =", shared_object);
+            },
+            }}} */
 
             'on disconnect': function() { console.warn("disconnected from server."); },
 
@@ -62,9 +85,12 @@
 
         jQuery(function($) {
 
-            _E.on("shared_objects/update/count", function(count) {
+            _E.on("shared_objects/count", function(count) {
                 $(".client-count").html("[ <strong>"+count+"</strong> client"+(count == 1 ? '' : 's')+" currently connected .. ]");
             });
+
+            _E.on("shared_objects/connect", function() { $(".client-count").html("[ <em>connected to server</em> ]"); });
+            _E.on("shared_objects/disconnect", function() { $(".client-count").html("[ <em>disconnected from server</em> ]"); });
 
             $("#send-message").click(function() {
                 SharedObjects.Update($("#message").val());

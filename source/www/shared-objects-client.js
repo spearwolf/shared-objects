@@ -6,7 +6,63 @@ window.SharedObjects = (function(){
     var E_NAMESPACE = "shared_objects/",
         socket = null,
         sessionId = null,
-        shared_objects = null;
+        shared_objects_data = null,
+        shared_objects = {};
+
+    function update_shared_objects(data) {
+        shared_objects_data = data;
+
+        var i, so, current, actions = [];
+
+        for (i = 0; i < data.shared_objects.length; i++) {
+            so = data.shared_objects[i];
+            current = shared_objects[so.sessionId];
+            if (!current) {
+                shared_objects[so.sessionId] = so;
+                actions.push({ emit: E_NAMESPACE + "new/" + so.sessionId, data: so });
+            } else if (current.updatedAt !== so.updatedAt) {
+                shared_objects[so.sessionId] = so;
+                actions.push({ emit: E_NAMESPACE + "update/" + so.sessionId, data: so });
+            }
+        }
+
+        var sid, found;
+        for (sid in shared_objects) {
+            if (shared_objects.hasOwnProperty(sid)) {
+                found = false;
+                for (i = 0; i < data.shared_objects.length; i++) {
+                    if (sid === data.shared_objects[i].sessionId) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    so = shared_objects[sid];
+                    delete shared_objects[sid];
+                    actions.push({ emit: E_NAMESPACE + "delete/" + so.sessionId, data: so });
+                }
+            }
+        }
+
+        _E.emit(E_NAMESPACE + "data", data);
+        for (i = 0; i < actions.length; i++) {
+            _E.emit(actions[i].emit, actions[i].data);
+        }
+    }
+
+    function update(target, source) {
+        var attr;
+        for (attr in source) {
+            if (source.hasOwnProperty(attr)) {
+                target[attr] = source[attr];
+            }
+        }
+    }
+
+    function SharedObj(extension, data) {
+        update(this, extension);
+        this.data = data;
+    }
 
     return {
         Connect: function() {
@@ -22,8 +78,7 @@ window.SharedObjects = (function(){
                     sessionId = data.hello.sessionId;
                     _E.emit(E_NAMESPACE + "connect", data.hello);
                 } else if ("count" in data) {
-                    shared_objects = data;
-                    _E.emit(E_NAMESPACE + "update", data);
+                    update_shared_objects(data);
                 } else if ("exception" in data) {
                     _E.emit(E_NAMESPACE + "error", data.exception.description, data.exception.exception);
                 }
@@ -37,21 +92,58 @@ window.SharedObjects = (function(){
                         socket.send(JSON.stringify(data));
                     }
                 } else {
-                    _E.emit(E_NAMESPACE+"error", "could not send data to server", "No-Connection-To-Server");
+                    _E.emit(E_NAMESPACE+"error", "could not send data to server", "NoneOpenConnectionToServer");
                 }
             });
         },
 
         Update: function(data) { _E.emit(E_NAMESPACE+"send", data); },
 
-        Get: function() {
-            if (sessionId) {
-                for (var i = 0; i < shared_objects.shared_objects.length; i++) {
-                    if (sessionId === shared_objects.shared_objects[i].sessionId) {
-                        return shared_objects.shared_objects[i];
+        Get: function(sessionId_) {
+            if (!sessionId_) {
+                sessionId_ = sessionId;
+            }
+            if (sessionId_) {
+                for (var i = 0; i < shared_objects_data.shared_objects.length; i++) {
+                    if (sessionId_ == shared_objects_data.shared_objects[i].sessionId) {
+                        return shared_objects_data.shared_objects[i];
                     }
                 }
             }
+        },
+
+        On: function(extension) {
+            var shared_objects_extended = {};
+            return _E.Module(E_NAMESPACE, {
+
+                'on new ..': function(id, data) {
+                    var so = new SharedObj(extension, data);
+                    shared_objects_extended[id] = so;
+                    if (typeof so.Create === 'function') {
+                        so.Create(id);
+                    }
+                },
+
+                'on update ..': function(id, data) {
+                    var so = shared_objects_extended[id];
+                    if (so) {
+                        so.data = data;
+                        if (typeof so.Update === 'function') {
+                            so.Update();
+                        }
+                    }
+                },
+
+                'on delete ..': function(id) {
+                    var so = shared_objects_extended[id];
+                    if (so) {
+                        if (typeof so.Destroy === 'function') {
+                            so.Destroy();
+                        }
+                        delete shared_objects_extended[id];
+                    }
+                }
+            });
         }
     };
 })();
