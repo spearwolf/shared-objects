@@ -42,7 +42,7 @@
 
         SharedObjects.On({
 
-            create: function(id) { console.log("new SharedObject:", id); },
+            create: function() { console.log("new SharedObject:", this.data.sessionId); },
 
             update: function() { console.log("SharedObject#" + this.data.sessionId, "updated", this); },
 

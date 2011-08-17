@@ -104,12 +104,12 @@ window.SharedObjects = (function(){
 
                 'on new ..': function(id, data) {
                     function SharedObj() {}
-                    SharedObj.prototype = typeof extension === 'function' ? new extension : extension;
+                    SharedObj.prototype = typeof extension === 'function' ? new extension(id, data) : extension;
                     var so = new SharedObj();
                     so.data = data;
                     shared_objects_extended[id] = so;
                     if (typeof so.create === 'function') {
-                        so.create(id);
+                        so.create();
                     }
                 },
 
