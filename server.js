@@ -36,7 +36,7 @@ io.sockets.on('connection', function(client) {
         co = SharedObjects.ClientObject.Create(sessionId, client);
 
     client.json.send({ hello: co });
-    SharedObjects.ClientObject.BroadcastAll();
+    //SharedObjects.ClientObject.BroadcastAll();
 
     client.on('message', function(data) {
         var jsonData, clientHandle;
