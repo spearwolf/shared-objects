@@ -26,8 +26,8 @@ server.listen(listenPort);
 var io = socket_io.listen(server);
 
 io.configure(function() {
-    //io.set('transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']);
-    io.set('transports', ['flashsocket', 'websocket']);
+    io.set('transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']);
+    //io.set('transports', ['flashsocket', 'websocket']);
 });
 
 io.sockets.on('connection', function(client) {

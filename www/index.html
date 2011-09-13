@@ -96,6 +96,10 @@
                 SharedObjects.Update($("#message").val());
             });
 
+            $("#recreate-id").click(function() {
+                SharedObjects.RequestNewId();
+            });
+
             $(document).bind("fb:me", function(_, me) {
                 console.info("hello", me.name, me);
                 socket.send('{"name":"'+me.name+'"}');
@@ -120,6 +124,9 @@
       <label for="message">json:</label>
       <input id="message" name="message" type="text"/>
       <button id="send-message">send</button>
+    </p>
+    <p>
+      <button id="recreate-id">create new id</button>
     </p>
 
     <!-- fork me -->

@@ -1,110 +1,81 @@
 var _ = require('./underscore'),
-    clientObjects = {},  // our lite in-memory database for shared client objects
-    clientObjectsGraveyard = [];
+    clientDb = {},
+    sharedObjectDb = {};  // our lite in-memory database for shared objects
 
 function ClientObject_create(sessionId, socket) {
     var now = new Date(),
         co = { sessionId: sessionId, updatedAt: now, createdAt: now };
-    clientObjects[sessionId] = { clientObject: co, socket: socket, guid: false };
+    clientDb[sessionId] = { clientObject: co, socket: socket, guid: false };
     return co;
 }
 
-function ClientObject_find(guid, secret) {
-    return _.detect(_.values(clientObjects), function(client) {
-        return guid === client.guid && secret === client.secret;
-    });
-}
+function ClientDataObject_findOrCreate(guid, secret) {
+    var cdo_key = guid + ":" + secret,
+        cdo = sharedObjectDb[cdo_key];
 
-function ClientObject_find_in_graveyard(guid, secret) {
-    var i, client = null;
-    for (i = 0; i < clientObjectsGraveyard.length; i++) {
-        if (guid === clientObjectsGraveyard[i].guid && secret === clientObjectsGraveyard[i].secret) {
-            client = clientObjectsGraveyard[i];
-            clientObjectsGraveyard[i] = null;
-            clientObjectsGraveyard = _.compact(clientObjectsGraveyard);
-            break;
-        }
+    if (typeof cdo !== 'object') {
+        cdo = sharedObjectDb[cdo_key] = { 
+            guid: guid,
+            createdAt: new Date()
+        };
+        console.log("created new SharedObject#" + guid);
+    } else {
+        console.log("found existing SharedObject#" + guid);
     }
-    return client;
+
+    return cdo;
 }
 
 function ClientObject_update(sessionId, properties) {
-    var client = clientObjects[sessionId],
-        client_object = null,
-        zombie_client = null,
-        read_only = false;
+    var client = clientDb[sessionId],
+        modified = false;
 
-    // handle guid authentication
+    console.log("ClientObject_update", sessionId, properties);
+
     if ("guid" in properties && "secret" in properties &&
-            typeof properties.guid === 'string' && typeof properties.secret === 'string') {
-        // client sends guid authentication
-        if (client.guid === false) {
-            // while current clientObject is empty
-            zombie_client = ClientObject_find_in_graveyard(properties.guid, properties.secret);
-            if (zombie_client) {
-                // resurrect old clientObject from graveyard
-                client.guid = zombie_client.guid;
-                client.secret = zombie_client.secret;
-                client.clientObject = zombie_client.clientObject;
-            } else {
-                var other_client_with_same_guid = ClientObject_find(properties.guid, properties.secret);
-                if (other_client_with_same_guid) {
-                    client.clientObject = other_client_with_same_guid.clientObject;
-                }
-                client.guid = properties.guid;
-                client.secret = properties.secret;
-            }
-        // oops.. current clientObject has already an guid and secret
-        // -- modifying guid and secret is not allowed
-        } else if (typeof client.guid === 'string') {
-            if (client.guid !== properties.guid || client.secret !== properties.secret) {
-                read_only = true;
-            }
-        }
+            typeof properties.guid === 'string' && typeof properties.secret === 'string' &&
+            properties.guid.length === 36 && properties.secret.length === 36) {
+
+        client.clientObject = ClientDataObject_findOrCreate(properties.guid, properties.secret);
+        client.guid = properties.guid;
+        modified = true;
     }
 
-    client_object = client.clientObject;
-    if (!read_only) {
-        _.extend(client_object, properties);
-    }
-
-    // set read-only attributes
-    client_object.sessionId = sessionId;
-    if (!read_only) {
-        client_object.updatedAt = new Date();
-    }
     if (client.guid) {
-        client_object.guid = client.guid;
-    }
-    delete client_object.secret;  // never send secret back to clients!
+        delete properties.guid;
+        delete properties.secret;
+        delete properties.createdAt;
 
-    return client_object;
+        client_object = client.clientObject;
+        _.extend(client_object, properties);
+
+        client_object.updatedAt = new Date();
+        modified = true;
+    }
+
+    return modified;
 }
 
 function ClientObject_destroy(sessionId) {
-    var client = clientObjects[sessionId];
-    if (client && client.guid) {
-        client.socket = null;
-        clientObjectsGraveyard.push(client);
-    }
-    delete clientObjects[sessionId];
+    delete clientDb[sessionId];
 }
 
 function BroadcastClientObjects() {
     var data = {
-        shared_objects: _.map(_.select(clientObjects, function(client) { return client.guid !== 'false'; }), function(client) {
-            return client.clientObject;
-        })
+        //shared_objects: _.map(_.select(clientDb, function(client) { return client.guid !== false; }), function(client) {
+            //return client.clientObject;
+        //})
+        shared_objects: _.values(sharedObjectDb)
     };
     data.count = data.shared_objects.length;
 
-    _.each(clientObjects, function(client) {
+    _.each(clientDb, function(client) {
         client.socket.json.send(data);
     });
 }
 
 function SendException(sessionId, description, exception) {
-    clientObjects[sessionId].socket.json.send({ exception: { description: description, exception: exception }});
+    clientDb[sessionId].socket.json.send({ exception: { description: description, exception: exception }});
 }
 
 
@@ -113,14 +84,14 @@ function SendException(sessionId, description, exception) {
 
 exports.ClientObject = {
     Create: ClientObject_create,
-    Get: function(sessionId) { return clientObjects[sessionId].clientObject; },
+    Get: function(sessionId) { return clientDb[sessionId].clientObject; },
     Update: ClientObject_update,
     Destroy: ClientObject_destroy,
     BroadcastAll: BroadcastClientObjects
 };
 
 exports.ClientHandle = {
-    Get: function(sessionId) { return clientObjects[sessionId]; }
+    Get: function(sessionId) { return clientDb[sessionId]; }
 };
 
 exports.SendException = SendException;

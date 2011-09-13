@@ -63,6 +63,7 @@ window.SharedObjects = (function(){
     }
 
     function update_shared_objects(data) {
+        console.log("update_shared_objects", data);
         shared_objects_data = data;
 
         var i, so, current, actions = [];
@@ -136,6 +137,15 @@ window.SharedObjects = (function(){
         },
 
         Update: function(data) { _E.emit(E_NAMESPACE+"send", data); },
+
+        RequestNewId: function() {
+            guid = create_guid();
+            createCookie(COOKIE_GUID, guid);
+            guid_secret = create_guid();
+            createCookie(COOKIE_SECRET, guid_secret);
+            console.log("(new id request) guid:", guid, "secret:", guid_secret);
+            _E.emit(E_NAMESPACE+"send", { guid: guid, secret: guid_secret });
+        },
 
         Data: function(id) {
             if (!id) {
