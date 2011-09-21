@@ -42,11 +42,15 @@
 
         SharedObjects.On({
 
-            create: function() { console.log("new SharedObject:", this.id, this); },
+            showInfo: function() {
+                return this.id + (this.owner ? "(me)" : '');
+            },
 
-            update: function() { console.log("SharedObject#" + this.id, "updated", this); },
+            create: function() { console.log("new SharedObject:", this.showInfo(), this); },
 
-            destroy: function()  { console.log("SharedObject#" + this.id, "destroyed"); }
+            update: function() { console.log("SharedObject#" + this.showInfo(), "updated", this); },
+
+            destroy: function()  { console.log("SharedObject#" + this.showInfo(), "destroyed"); }
         });
 
 
@@ -126,7 +130,7 @@
       <button id="send-message">send</button>
     </p>
     <p>
-      <button id="recreate-id">create new id</button>
+      <button id="recreate-id">re-create id</button>
     </p>
 
     <!-- fork me -->

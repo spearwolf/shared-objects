@@ -27,16 +27,14 @@ var io = socket_io.listen(server);
 
 io.configure(function() {
     io.set('transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']);
-    //io.set('transports', ['flashsocket', 'websocket']);
 });
 
 io.sockets.on('connection', function(client) {
 
-    var sessionId = client.id,
-        co = SharedObjects.ClientObject.Create(sessionId, client);
+    var sessionId = client.id;
 
-    client.json.send({ hello: co });
-    //SharedObjects.ClientObject.BroadcastAll();
+    SharedObjects.ClientConnection.Create(sessionId, client);
+    client.json.send({ hello: { sessionId: sessionId }});
 
     client.on('message', function(data) {
         var jsonData, clientHandle;
@@ -44,22 +42,23 @@ io.sockets.on('connection', function(client) {
             jsonData = JSON.parse(data);
 
         } catch (jsonError) {
-            //console.log("Invalid JSON: "+data);
+            console.log("Invalid JSON("+jsonError+") -->", data);
             SharedObjects.SendException(sessionId, "Invalid JSON: "+data, jsonError);
         }
         try {
-            SharedObjects.ClientObject.Update(sessionId, jsonData);
-            SharedObjects.ClientObject.BroadcastAll();
+            if (SharedObjects.ClientConnection.Update(sessionId, jsonData)) {
+                SharedObjects.ClientConnection.BroadcastAll();
+            }
 
         } catch (error) {
-            //console.log("Error: "+error);
+            console.log("Error: ", error);
             SharedObjects.SendException(sessionId, "Error: "+error, error);
         }
     });
 
     client.on('disconnect', function() {
-        SharedObjects.ClientObject.Destroy(sessionId);
-        SharedObjects.ClientObject.BroadcastAll();
+        SharedObjects.ClientConnection.Destroy(sessionId);
+        //SharedObjects.ClientConnection.BroadcastAll();
     });
 });
 

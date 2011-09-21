@@ -32,5 +32,6 @@ namespace :build do
       puts "\t#{'building'.green.bold} #{src} -> #{dst}"
       JavaScriptBuilder.compress(src, dst)
     end
+    `cp -r lib/jasmine-1.1.0 www/jasmine`
   end
 end

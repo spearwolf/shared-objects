@@ -9,10 +9,11 @@ window.SharedObjects = (function(){
     var E_NAMESPACE = "shared_objects/",
         socket = null,
         shared_objects_data = null,
-        shared_objects = {};
+        shared_objects = {},
+        isConnected = false;
 
     // ========================================================================
-    // http://www.quirksmode.org/js/cookies.html
+    // http://www.quirksmode.org/js/cookies.html  {{{
     function createCookie(name,value,days) {
         var expires = "";
         if (days) {
@@ -37,16 +38,18 @@ window.SharedObjects = (function(){
     function eraseCookie(name) {
         createCookie(name,"",-1);
     }
+    // }}}
     // ========================================================================
 
     // ========================================================================
-    // http://note19.com/2007/05/27/javascript-guid-generator/
+    // http://note19.com/2007/05/27/javascript-guid-generator/  {{{
     function S4() {
         return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
     }
     function create_guid() {
         return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
     }
+    // }}}
     // ========================================================================
 
     var guid = readCookie(COOKIE_GUID),
@@ -70,11 +73,14 @@ window.SharedObjects = (function(){
 
         for (i = 0; i < data.shared_objects.length; i++) {
             so = data.shared_objects[i];
+            so.createdAt = new Date(so.createdAt);
+            so.updatedAt = new Date(so.updatedAt);
+
             current = shared_objects[so.guid];
             if (!current) {
                 shared_objects[so.guid] = so;
                 actions.push({ emit: E_NAMESPACE + "new/" + so.guid, data: so });
-            } else if (current.updatedAt !== so.updatedAt) {
+            } else if (Date.parse(current.updatedAt) !== Date.parse(so.updatedAt)) {
                 shared_objects[so.guid] = so;
                 actions.push({ emit: E_NAMESPACE + "update/" + so.guid, data: so });
             }
@@ -105,15 +111,19 @@ window.SharedObjects = (function(){
     }
 
     return {
+        IsConnected: function() { return isConnected; },
+
         Connect: function() {
             socket = io.connect(); 
 
             socket.on('disconnect', function() {
+                isConnected = false;
                 _E.emit(E_NAMESPACE + "disconnect");
             });
 
             socket.on("message", function(data) {
                 if ("hello" in data) {
+                    isConnected = true;
                     socket.send(JSON.stringify({ guid: guid, secret: guid_secret }));
                     _E.emit(E_NAMESPACE + "connect", data.hello);
                 } else if ("count" in data) {
@@ -144,6 +154,7 @@ window.SharedObjects = (function(){
             guid_secret = create_guid();
             createCookie(COOKIE_SECRET, guid_secret);
             console.log("(new id request) guid:", guid, "secret:", guid_secret);
+            shared_objects = {};
             _E.emit(E_NAMESPACE+"send", { guid: guid, secret: guid_secret });
         },
 
@@ -161,15 +172,17 @@ window.SharedObjects = (function(){
         },
 
         On: function(extension) {
-            var shared_objects_extended = {};
-            return _E.Module(E_NAMESPACE, {
+            var shared_objects_extended = {},
+                e_mod = _E.Module(E_NAMESPACE, {
 
                 'on new ..': function(id, data) {
+                    console.log("on new ..", id, data);
                     function SharedObj() {}
                     SharedObj.prototype = typeof extension === 'function' ? new extension(id, data) : extension;
                     var so = new SharedObj();
                     so.id = id;
                     so.data = data;
+                    so.owner = id === guid;
                     shared_objects_extended[id] = so;
                     if (typeof so.create === 'function') {
                         so.create();
@@ -177,6 +190,7 @@ window.SharedObjects = (function(){
                 },
 
                 'on update ..': function(id, data) {
+                    console.log("on upate ..", id, data);
                     var so = shared_objects_extended[id];
                     if (so) {
                         so.data = data;
@@ -196,6 +210,10 @@ window.SharedObjects = (function(){
                     }
                 }
             });
+            if (shared_objects_data) {
+                update_shared_objects(shared_objects_data);
+            }
+            return e_mod;
         }
     };
 })();

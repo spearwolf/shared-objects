@@ -1,0 +1,57 @@
+
++---+--------------------------------------------------------------------------
+|   | = SharedObjects (Client) API (source/www/shared-objects-client.js)
+| C |
+| L |     - Connect
+| I |     - IsConnected
+| E |     - Update
+| N |     - Data
+| T |     - On
+|   |     - RequestNewId             /\
+|   |                               /  \
+|   +------------------------------+    \    +---------------------------------
+|   | = custom_event.js                  \  /
+|   |                                     \/
+|   | Events
+|   |     - shared_objects/data         (data) raw data recieved from server
+|   |     - shared_objects/connect      (hello) connection to server established
+|   |     - shared_objects/disconnect   () disconnect from server
+|   |     - shared_objects/error        (description) server error response
+|   |     - shared_objects/send         (data) send data to server
+|   |
+|   |     - shared_objects/new/:id      used internally by SharedObjects.On()
+|   |     - shared_objects/update/:id   ..
+|   |     - shared_objects/delete/:id   ..
+|   | 
+|   +--------------------------------------------------------------------------
+|   | = socket.io client
+|   | 
++---+--------------------------------------------------------------------------
+
+  (((network)))
+
++---+--------------------------------------------------------------------------
+|   | = node.js/socket.io server (server.js)
+| S | 
+| E +--------------------------------------------------------------------------
+| R | = SharedObjects.ClientConnection API (source/shared_objects.js)
+| V | 
+| E | Client Connection <-> SharedObject mapping layer.
+| R | 
+|   | Public API
+|   |     - Create
+|   |     - Update
+|   |     - Destroy
+|   |     - BroadcastAll
+|   | 
+|   +--------------------------------------------------------------------------
+|   | = SharedObjectDB (source/shared_objects.js)
+|   | 
+|   | Database layer for all "shared" objects.
+|   | 
+|   | Public API
+|   |     - findOrCreate
+|   |     - listAll
+|   | 
++---+-------------------------------------------------------------------------- 
+

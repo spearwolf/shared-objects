@@ -1,71 +1,91 @@
-var _ = require('./underscore'),
-    clientDb = {},
-    sharedObjectDb = {};  // our lite in-memory database for shared objects
+var _ = require('./underscore'), clientDb = {};
 
-function ClientObject_create(sessionId, socket) {
-    var now = new Date(),
-        co = { sessionId: sessionId, updatedAt: now, createdAt: now };
-    clientDb[sessionId] = { clientObject: co, socket: socket, guid: false };
-    return co;
-}
+var SharedObjectDb = (function() {  // {{{
+    var sharedObjectDb = {};  // our lite in-memory database for shared objects
 
-function ClientDataObject_findOrCreate(guid, secret) {
-    var cdo_key = guid + ":" + secret,
-        cdo = sharedObjectDb[cdo_key];
-
-    if (typeof cdo !== 'object') {
-        cdo = sharedObjectDb[cdo_key] = { 
-            guid: guid,
-            createdAt: new Date()
-        };
-        console.log("created new SharedObject#" + guid);
-    } else {
-        console.log("found existing SharedObject#" + guid);
+    function generateKey(guid, secret) {
+        return guid + ":" + secret;
     }
 
-    return cdo;
+    function find(key) {
+        return sharedObjectDb[key];
+    }
+
+    function create(key, guid) {
+        var now = new Date(),
+            obj = sharedObjectDb[key] = { 
+                guid: guid,
+                createdAt: now,
+                updatedAt: now
+            };
+        return obj;
+    }
+
+    return {
+        findOrCreate: function(guid, secret) {
+            var obj_key = generateKey(guid, secret),
+                obj = find(obj_key);
+
+            if (typeof obj !== 'object') {
+                obj = create(obj_key, guid);
+                console.log("created new SharedObject#" + guid);
+            } else {
+                console.log("found existing SharedObject#" + guid);
+            }
+
+            return obj;
+        },
+
+        listAll: function() {
+            return _.values(sharedObjectDb);
+        }
+    };
+})();
+// }}}
+
+function ClientConnectionCreate(sessionId, socket) {
+    clientDb[sessionId] = { socket: socket };
 }
 
-function ClientObject_update(sessionId, properties) {
+function ClientConnectionUpdate(sessionId, properties) {
     var client = clientDb[sessionId],
         modified = false;
 
-    console.log("ClientObject_update", sessionId, properties);
+    console.log("ClientConnectionUpdate", sessionId, properties);
 
     if ("guid" in properties && "secret" in properties &&
             typeof properties.guid === 'string' && typeof properties.secret === 'string' &&
             properties.guid.length === 36 && properties.secret.length === 36) {
 
-        client.clientObject = ClientDataObject_findOrCreate(properties.guid, properties.secret);
-        client.guid = properties.guid;
+        client.clientObject = SharedObjectDb.findOrCreate(properties.guid, properties.secret);
         modified = true;
     }
 
-    if (client.guid) {
+    if (client.clientObject) {
         delete properties.guid;
         delete properties.secret;
         delete properties.createdAt;
+        delete properties.updatedAt;
 
-        client_object = client.clientObject;
-        _.extend(client_object, properties);
+        if (_.values(properties).length !== 0) {
+            client_object = client.clientObject;
+            _.extend(client_object, properties);
 
-        client_object.updatedAt = new Date();
-        modified = true;
+            client_object.updatedAt = new Date();
+            modified = true;
+        }
     }
 
     return modified;
 }
 
-function ClientObject_destroy(sessionId) {
+function ClientConnectionDestroy(sessionId) {
     delete clientDb[sessionId];
 }
 
-function BroadcastClientObjects() {
+function ClientConnectionBroadcastAll() {
     var data = {
-        //shared_objects: _.map(_.select(clientDb, function(client) { return client.guid !== false; }), function(client) {
-            //return client.clientObject;
-        //})
-        shared_objects: _.values(sharedObjectDb)
+        shared_objects: SharedObjectDb.listAll()
     };
     data.count = data.shared_objects.length;
 
@@ -82,16 +102,11 @@ function SendException(sessionId, description, exception) {
 /* Public API
  =========================================================================== */
 
-exports.ClientObject = {
-    Create: ClientObject_create,
-    Get: function(sessionId) { return clientDb[sessionId].clientObject; },
-    Update: ClientObject_update,
-    Destroy: ClientObject_destroy,
-    BroadcastAll: BroadcastClientObjects
-};
-
-exports.ClientHandle = {
-    Get: function(sessionId) { return clientDb[sessionId]; }
+exports.ClientConnection = {
+    Create: ClientConnectionCreate,
+    Update: ClientConnectionUpdate,
+    Destroy: ClientConnectionDestroy,
+    BroadcastAll: ClientConnectionBroadcastAll
 };
 
 exports.SendException = SendException;
