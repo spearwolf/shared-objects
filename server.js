@@ -33,32 +33,27 @@ io.sockets.on('connection', function(client) {
 
     var sessionId = client.id;
 
-    SharedObjects.ClientConnection.Create(sessionId, client);
+    SharedObjects.Client.Create(sessionId, client);
     client.json.send({ hello: { sessionId: sessionId }});
 
     client.on('message', function(data) {
-        var jsonData, clientHandle;
+        var jsonData, clientHandle, broadcast;
         try {
             jsonData = JSON.parse(data);
 
         } catch (jsonError) {
             console.log("Invalid JSON("+jsonError+") -->", data);
-            SharedObjects.SendException(sessionId, "Invalid JSON: "+data, jsonError);
         }
         try {
-            if (SharedObjects.ClientConnection.Update(sessionId, jsonData)) {
-                SharedObjects.ClientConnection.BroadcastAll();
-            }
+            SharedObjects.Dispatch(sessionId, jsonData);
 
         } catch (error) {
             console.log("Error: ", error);
-            SharedObjects.SendException(sessionId, "Error: "+error, error);
         }
     });
 
     client.on('disconnect', function() {
-        SharedObjects.ClientConnection.Destroy(sessionId);
-        //SharedObjects.ClientConnection.BroadcastAll();
+        SharedObjects.Client.Destroy(sessionId);
     });
 });
 

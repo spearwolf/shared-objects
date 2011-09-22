@@ -34,18 +34,17 @@
 |   | = node.js/socket.io server (server.js)
 | S | 
 | E +--------------------------------------------------------------------------
-| R | = SharedObjects.ClientConnection API (source/shared_objects.js)
+| R | = SharedObjects (server) API (source/shared_objects.js)
 | V | 
-| E | Client Connection <-> SharedObject mapping layer.
+| E | Client <-> SharedObject mapping layer.
 | R | 
 |   | Public API
-|   |     - Create
-|   |     - Update
-|   |     - Destroy
-|   |     - BroadcastAll
+|   |     - Client.Create
+|   |     - Client.Destroy
+|   |     - Dispatch
 |   | 
 |   +--------------------------------------------------------------------------
-|   | = SharedObjectDB (source/shared_objects.js)
+|   | = SharedObjectsDb (source/shared-objects-db-XXX.js)
 |   | 
 |   | Database layer for all "shared" objects.
 |   | 

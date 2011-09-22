@@ -66,7 +66,7 @@ window.SharedObjects = (function(){
     }
 
     function update_shared_objects(data) {
-        console.log("update_shared_objects", data);
+        //console.log("update_shared_objects", data);
         shared_objects_data = data;
 
         var i, so, current, actions = [];
@@ -124,7 +124,7 @@ window.SharedObjects = (function(){
             socket.on("message", function(data) {
                 if ("hello" in data) {
                     isConnected = true;
-                    socket.send(JSON.stringify({ guid: guid, secret: guid_secret }));
+                    socket.send(JSON.stringify({ auth: { guid: guid, secret: guid_secret }}));
                     _E.emit(E_NAMESPACE + "connect", data.hello);
                 } else if ("count" in data) {
                     update_shared_objects(data);
@@ -138,7 +138,7 @@ window.SharedObjects = (function(){
                     if (typeof data === 'string') {
                         socket.send(data);
                     } else {
-                        socket.send(JSON.stringify(data));
+                        socket.send(JSON.stringify({ update: data }));
                     }
                 } else {
                     _E.emit(E_NAMESPACE+"error", "could not send data to server", "NoneOpenConnectionToServer");
@@ -155,7 +155,7 @@ window.SharedObjects = (function(){
             createCookie(COOKIE_SECRET, guid_secret);
             console.log("(new id request) guid:", guid, "secret:", guid_secret);
             shared_objects = {};
-            _E.emit(E_NAMESPACE+"send", { guid: guid, secret: guid_secret });
+            socket.send(JSON.stringify({ auth: { guid: guid, secret: guid_secret }}));
         },
 
         Data: function(id) {
@@ -176,7 +176,7 @@ window.SharedObjects = (function(){
                 e_mod = _E.Module(E_NAMESPACE, {
 
                 'on new ..': function(id, data) {
-                    console.log("on new ..", id, data);
+                    //console.log("on new ..", id, data);
                     function SharedObj() {}
                     SharedObj.prototype = typeof extension === 'function' ? new extension(id, data) : extension;
                     var so = new SharedObj();
@@ -190,7 +190,7 @@ window.SharedObjects = (function(){
                 },
 
                 'on update ..': function(id, data) {
-                    console.log("on upate ..", id, data);
+                    //console.log("on upate ..", id, data);
                     var so = shared_objects_extended[id];
                     if (so) {
                         so.data = data;
