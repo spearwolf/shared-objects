@@ -29,6 +29,26 @@
 +---+--------------------------------------------------------------------------
 
   (((network)))
+        |
+        +--------------------------------------------------------+
+        | = json protocol                                        |
+        |                                                        |
+        |     [Server]                                           |
+        |         - Welcome Response                             |
+        |             :hello => { sessionId: SESSION_ID          |
+        |                                                        |
+        |         - Shared Objects Data                          |
+        |             :shared_objects => [ { ... }, .. ],        |
+        |             :count => COUNT                            |
+        |                                                        |
+        |     [Client]                                           |
+        |         - Authentication                               |
+        |             :auth => { guid: GUID, secret: SECRET }    |
+        |                                                        |
+        |         - Update                                       |
+        |             :udate => { ... }                          |
+        |                                                        |
+        +--------------------------------------------------------+
 
 +---+--------------------------------------------------------------------------
 |   | = node.js/socket.io server (server.js)
