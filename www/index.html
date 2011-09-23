@@ -40,6 +40,7 @@
     <script src="shared-objects-client-min.js"></script> 
     <script> 
 
+      //setTimeout(function() {
         SharedObjects.On({
 
             showInfo: function() {
@@ -52,13 +53,14 @@
 
             destroy: function()  { console.log("SharedObject#" + this.showInfo(), "destroyed"); }
         });
-
+      //}, 10000);
 
         _E.Module("shared_objects", {
-
+          /*
             'on connect': function(data) {
                 console.info("established connection to socket.io server, your public sessionId is", data.sessionId);
             },
+            */
 
             'on data': function(shared_objects) {
                 _E.emit("shared_objects/count", shared_objects.count);
@@ -78,11 +80,12 @@
             },
             }}} */
 
-            'on disconnect': function() { console.warn("disconnected from server."); },
-
+            // 'on disconnect': function() { console.warn("disconnected from server."); },
+            /*
             'on error': function(description, exception) {
                 alert("Got Error: " + description + "\n\n" + exception);
             }
+            */
         });
 
         SharedObjects.Connect();

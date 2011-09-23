@@ -110,6 +110,8 @@ window.SharedObjects = (function(){
         }
     }
 
+    function SharedObj() {}
+
     return {
         IsConnected: function() { return isConnected; },
 
@@ -158,13 +160,13 @@ window.SharedObjects = (function(){
             socket.send(JSON.stringify({ auth: { guid: guid, secret: guid_secret }}));
         },
 
-        Data: function(id) {
-            if (!id) {
-                id = guid;
+        Get: function(_guid) {
+            if (!_guid) {
+                _guid = guid;
             }
-            if (id) {
+            if (_guid) {
                 for (var i = 0; i < shared_objects_data.shared_objects.length; i++) {
-                    if (id == shared_objects_data.shared_objects[i].guid) {
+                    if (_guid === shared_objects_data.shared_objects[i].guid) {
                         return shared_objects_data.shared_objects[i];
                     }
                 }
@@ -176,8 +178,6 @@ window.SharedObjects = (function(){
                 e_mod = _E.Module(E_NAMESPACE, {
 
                 'on new ..': function(id, data) {
-                    //console.log("on new ..", id, data);
-                    function SharedObj() {}
                     SharedObj.prototype = typeof extension === 'function' ? new extension(id, data) : extension;
                     var so = new SharedObj();
                     so.id = id;
@@ -210,9 +210,9 @@ window.SharedObjects = (function(){
                     }
                 }
             });
-            if (shared_objects_data) {
-                update_shared_objects(shared_objects_data);
-            }
+            //if (shared_objects_data) {
+                //update_shared_objects(shared_objects_data);
+            //}
             return e_mod;
         }
     };

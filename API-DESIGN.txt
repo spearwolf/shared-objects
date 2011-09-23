@@ -5,7 +5,7 @@
 | L |     - Connect
 | I |     - IsConnected
 | E |     - Update
-| N |     - Data
+| N |     - Get
 | T |     - On
 |   |     - RequestNewId             /\
 |   |                               /  \
@@ -35,7 +35,7 @@
         |                                                        |
         |     [Server]                                           |
         |         - Welcome Response                             |
-        |             :hello => { sessionId: SESSION_ID          |
+        |             :hello => { sessionId: SESSION_ID }        |
         |                                                        |
         |         - Shared Objects Data                          |
         |             :shared_objects => [ { ... }, .. ],        |
