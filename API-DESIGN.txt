@@ -34,8 +34,7 @@
         |             :hello => { sessionId: SESSION_ID }        |
         |                                                        |
         |         - Shared Objects Data                          |
-        |             :shared_objects => [ { ... }, .. ],        |
-        |             :count => COUNT                            |
+        |             :shared_objects => [ { ... }, .. ]         |
         |                                                        |
         |     [Client]                                           |
         |         - Authentication                               |

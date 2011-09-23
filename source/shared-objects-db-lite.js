@@ -57,10 +57,11 @@ function guid_exists(guid) {
     return sharedObjectsDb[guid];
 }
 
-function create(key, guid) {
+function create(key, guid, type) {
     var now = new Date(),
         obj = sharedObjectsDb[key] = { 
             guid: guid,
+            type: type||"shared_objects.ClientObject",
             createdAt: now,
             updatedAt: now
         };
@@ -69,14 +70,14 @@ function create(key, guid) {
     return obj;
 }
 
-exports.findOrCreate = function(guid, secret) {
+exports.findOrCreate = function(guid, secret, type) {
     var obj_key = generateKey(guid, secret),
         obj = find(obj_key),
         state = 0;
 
     if (typeof obj !== 'object') {
         if (!guid_exists(guid)) {
-            obj = create(obj_key, guid);
+            obj = create(obj_key, guid, type);
             state = 2;
             console.log("findOrCreate", "created new SharedObject#" + guid, obj);
         } else {

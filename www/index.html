@@ -40,6 +40,7 @@
     <script src="shared-objects-client-min.js"></script> 
     <script> 
 
+        //SharedObjects.Prototype("shared_objects.ClientObject", {
         SharedObjects.On({
 
             showInfo: function() {
@@ -61,7 +62,7 @@
             */
 
             'on data': function(shared_objects) {
-                _E.emit("shared_objects/count", shared_objects.count);
+                _E.emit("shared_objects/count", shared_objects.shared_objects.length);
             },
 
             /* {{{
@@ -91,11 +92,11 @@
         jQuery(function($) {
 
             _E.on("shared_objects/count", function(count) {
-                $(".client-count").html("[ <strong>"+count+"</strong> client"+(count == 1 ? '' : 's')+" currently connected .. ]");
+                $(".client-count").html("[ <strong>"+count+"</strong> shared object"+(count == 1 ? '' : 's')+" currently connected .. ]");
             });
 
-            _E.on("shared_objects/connect", function() { $(".client-count").html("[ <em>connected to server</em> ]"); });
-            _E.on("shared_objects/disconnect", function() { $(".client-count").html("[ <em>disconnected from server</em> ]"); });
+            _E.on("shared_objects/connect", function() { $(".client-count").html("[ <em>online!</em> ]"); });
+            _E.on("shared_objects/disconnect", function() { $(".client-count").html("[ <em>disconnected.</em> ]"); });
 
             $("#send-message").click(function() {
                 SharedObjects.Update($("#message").val());

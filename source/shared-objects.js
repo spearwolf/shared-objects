@@ -66,7 +66,6 @@ function Broadcast(sessionId, state) {
     var data = {
         shared_objects: SharedObjectsDb.listAll()
     };
-    data.count = data.shared_objects.length;
 
     if (state === 2) {
         _.each(clientHandleDb, function(client) {

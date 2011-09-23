@@ -163,7 +163,7 @@ window.SharedObjects = (function(){
                     isConnected = true;
                     socket.send(JSON.stringify({ auth: { guid: guid, secret: guid_secret }}));
                     _E.emit(E_NAMESPACE + "connect", data.hello);
-                } else if ("count" in data) {
+                } else if ("shared_objects" in data) {
                     update_shared_objects(data);
                 } else if ("exception" in data) {
                     _E.emit(E_NAMESPACE + "error", data.exception.description, data.exception.exception);
