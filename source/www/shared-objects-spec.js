@@ -13,32 +13,20 @@ describe("shared_objects", function() {
 
     it("creates a new SharedObject for me", function() {
 
-        var so, me;
+        var created, so = SharedObjects.On({
 
-        runs(function() {
-            so = SharedObjects.On({
-
-                create: function() {
-                    console.log("SharedObjects.On#create", this);
-                    if (this.owner) {
-                        me = this;
-                    }
-                },
-
-                update: function() {
-                    console.log("SharedObjects.On#create", this);
-                    if (this.owner) {
-                        me = this;
-                    }
+            create: function() {
+                if (this.owner) {
+                    created = true;
                 }
-            });
-
-            waitsFor(function() { return typeof me === 'object'; }, "SharedObjects.On#create never called", 10000);
+            }
         });
 
         runs(function() {
+            waitsFor(function() { return created; }, "SharedObjects.On#create never called", 10000);
+
             so.destroy();
-            expect(me).toBeDefined();
+            expect(created).toBeDefined();
         });
     });
 });
