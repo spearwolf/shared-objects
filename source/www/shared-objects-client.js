@@ -8,9 +8,10 @@ window.SharedObjects = (function(){
 
     var E_NAMESPACE = "shared_objects/",
         socket = null,
-        shared_objects_data = null,
+        current_shared_objects_raw_data = null,
         shared_objects = {},
-        isConnected = false;
+        isConnected = false,
+        nextPrototypeDomain = 0;
 
     // ========================================================================
     // http://www.quirksmode.org/js/cookies.html  {{{
@@ -52,8 +53,8 @@ window.SharedObjects = (function(){
     // }}}
     // ========================================================================
 
-    var guid = readCookie(COOKIE_GUID),
-        guid_secret = readCookie(COOKIE_SECRET);
+    var guid = null,  //readCookie(COOKIE_GUID),
+        guid_secret = null;  //readCookie(COOKIE_SECRET);
     
     if (!guid) {
         guid = create_guid();
@@ -65,30 +66,26 @@ window.SharedObjects = (function(){
         console.log("(from cookie) guid:", guid, "secret:", guid_secret);
     }
 
-    function update_shared_objects(data) {
-        //console.log("update_shared_objects", data);
-        shared_objects_data = data;
+    function update_domain_objects(domain, data, actions) {
+        var domain_objects = shared_objects[domain],
+            instance = domain_objects[data.guid];
 
-        var i, so, current, actions = [];
+        if (!instance) {
+            domain_objects[data.guid] = data;
+            actions.push({ emit: E_NAMESPACE + domain + "new/" + data.guid, data: data });
 
-        for (i = 0; i < data.shared_objects.length; i++) {
-            so = data.shared_objects[i];
-            so.createdAt = new Date(so.createdAt);
-            so.updatedAt = new Date(so.updatedAt);
-
-            current = shared_objects[so.guid];
-            if (!current) {
-                shared_objects[so.guid] = so;
-                actions.push({ emit: E_NAMESPACE + "new/" + so.guid, data: so });
-            } else if (Date.parse(current.updatedAt) !== Date.parse(so.updatedAt)) {
-                shared_objects[so.guid] = so;
-                actions.push({ emit: E_NAMESPACE + "update/" + so.guid, data: so });
-            }
+        } else if (Date.parse(instance.updatedAt) !== Date.parse(data.updatedAt)) {
+            domain_objects[data.guid] = data;
+            actions.push({ emit: E_NAMESPACE + domain + "update/" + data.guid, data: data });
         }
+    }
 
-        var id, found;
-        for (id in shared_objects) {
-            if (shared_objects.hasOwnProperty(id)) {
+    function destroy_domain_objects(domain, data, actions) {
+        var domain_objects = shared_objects[domain],
+            id, found, so;
+
+        for (id in domain_objects) {
+            if (domain_objects.hasOwnProperty(id)) {
                 found = false;
                 for (i = 0; i < data.shared_objects.length; i++) {
                     if (id === data.shared_objects[i].guid) {
@@ -97,16 +94,54 @@ window.SharedObjects = (function(){
                     }
                 }
                 if (!found) {
-                    so = shared_objects[id];
-                    delete shared_objects[id];
-                    actions.push({ emit: E_NAMESPACE + "delete/" + so.guid, data: so });
+                    so = domain_objects[id];
+                    delete domain_objects[id];
+                    actions.push({ emit: E_NAMESPACE + domain + "delete/" + so.guid, data: so });
                 }
             }
         }
+    }
+
+    function update_shared_objects(data) {
+        current_shared_objects_raw_data = data;  // save for later usage
+
+        var i, so, domain, actions = [];
+
+        for (i = 0; i < data.shared_objects.length; i++) {
+            so = data.shared_objects[i];
+            so.createdAt = new Date(so.createdAt);
+            so.updatedAt = new Date(so.updatedAt);
+
+            for (domain = 0; domain < nextPrototypeDomain; domain++) {
+                update_domain_objects(domain, so, actions);
+            }
+        }
+
+        for (domain = 0; domain < nextPrototypeDomain; domain++) {
+            destroy_domain_objects(domain, data, actions);
+        }
 
         _E.emit(E_NAMESPACE + "data", data);
+
         for (i = 0; i < actions.length; i++) {
             _E.emit(actions[i].emit, actions[i].data);
+        }
+    }
+
+    function init_domain(domain) {
+        var i, actions;
+        shared_objects[domain] = {};
+
+        if (current_shared_objects_raw_data) {
+            actions = [];
+            for (i = 0; i < current_shared_objects_raw_data.shared_objects.length; i++) {
+                update_domain_objects(domain, current_shared_objects_raw_data.shared_objects[i], actions);
+            }
+            destroy_domain_objects(domain, current_shared_objects_raw_data, actions);
+
+            for (i = 0; i < actions.length; i++) {
+                _E.emit(actions[i].emit, actions[i].data);
+            }
         }
     }
 
@@ -143,7 +178,7 @@ window.SharedObjects = (function(){
                         socket.send(JSON.stringify({ update: data }));
                     }
                 } else {
-                    _E.emit(E_NAMESPACE+"error", "could not send data to server", "NoneOpenConnectionToServer");
+                    _E.emit(E_NAMESPACE + "error", "could not send data to server", "NoServerConnection");
                 }
             });
         },
@@ -156,6 +191,7 @@ window.SharedObjects = (function(){
             guid_secret = create_guid();
             createCookie(COOKIE_SECRET, guid_secret);
             console.log("(new id request) guid:", guid, "secret:", guid_secret);
+            // TODO cleanup
             shared_objects = {};
             socket.send(JSON.stringify({ auth: { guid: guid, secret: guid_secret }}));
         },
@@ -165,19 +201,59 @@ window.SharedObjects = (function(){
                 _guid = guid;
             }
             if (_guid) {
-                for (var i = 0; i < shared_objects_data.shared_objects.length; i++) {
-                    if (_guid === shared_objects_data.shared_objects[i].guid) {
-                        return shared_objects_data.shared_objects[i];
+                for (var i = 0; i < current_shared_objects_raw_data.shared_objects.length; i++) {
+                    if (_guid === current_shared_objects_raw_data.shared_objects[i].guid) {
+                        return current_shared_objects_raw_data.shared_objects[i];
                     }
                 }
             }
         },
 
         On: function(extension) {
-            var shared_objects_extended = {},
-                e_mod = _E.Module(E_NAMESPACE, {
+            var domain = nextPrototypeDomain++,
+                shared_objects_extended = {},
 
-                'on new ..': function(id, data) {
+                e_mod = _E.Module(E_NAMESPACE, (function() {
+                    var p = {};
+
+                    p['on '+domain+'new ..'] = function(id, data) {
+                        SharedObj.prototype = typeof extension === 'function' ? new extension(id, data) : extension;
+                        var so = new SharedObj();
+                        so.id = id;
+                        so.data = data;
+                        so.owner = id === guid;
+                        shared_objects_extended[id] = so;
+                        if (typeof so.create === 'function') {
+                            so.create();
+                        }
+                    };
+
+                    p['on '+domain+'update ..'] = function(id, data) {
+                        var so = shared_objects_extended[id];
+                        if (so) {
+                            so.data = data;
+                            if (typeof so.update === 'function') {
+                                so.update();
+                            }
+                        }
+                    };
+
+                    p['on '+domain+'delete ..'] = function(id) {
+                        var so = shared_objects_extended[id];
+                        if (so) {
+                            if (typeof so.destroy === 'function') {
+                                so.destroy();
+                            }
+                            delete shared_objects_extended[id];
+                        }
+                    };
+
+                    return p;
+                })());
+            /*
+            {
+
+                'on '+domain+'new ..': function(id, data) {
                     SharedObj.prototype = typeof extension === 'function' ? new extension(id, data) : extension;
                     var so = new SharedObj();
                     so.id = id;
@@ -189,8 +265,7 @@ window.SharedObjects = (function(){
                     }
                 },
 
-                'on update ..': function(id, data) {
-                    //console.log("on upate ..", id, data);
+                'on '+domain+'update ..': function(id, data) {
                     var so = shared_objects_extended[id];
                     if (so) {
                         so.data = data;
@@ -200,7 +275,7 @@ window.SharedObjects = (function(){
                     }
                 },
 
-                'on delete ..': function(id) {
+                'on '+domain+'delete ..': function(id) {
                     var so = shared_objects_extended[id];
                     if (so) {
                         if (typeof so.destroy === 'function') {
@@ -210,9 +285,8 @@ window.SharedObjects = (function(){
                     }
                 }
             });
-            //if (shared_objects_data) {
-                //update_shared_objects(shared_objects_data);
-            //}
+            */
+            init_domain(domain);
             return e_mod;
         }
     };

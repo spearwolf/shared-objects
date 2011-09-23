@@ -21,6 +21,7 @@ class JavaScriptBuilder
       end
     end
     compress_with_yui @content
+    #compress_with_closure @content
   end
 
   class << self
