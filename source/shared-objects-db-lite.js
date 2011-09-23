@@ -1,12 +1,53 @@
 var _ = require('./underscore'),
 
     // our lite in-memory database for shared objects
-    sharedObjectsDb = {};
+    sharedObjectsDb = {},
+    metaObjectsDb = {};
 
+
+function metaInfo(guid) {
+    var meta = metaObjectsDb[guid];
+    if (!meta) {
+        meta = metaObjectsDb[guid] = {};
+    }
+    return meta;
+}
+
+exports.incRefCount = function(guid) {
+    var meta = metaInfo(guid);
+    ++meta.referenceCount;
+    if (meta.destroyTimer) {
+        clearTimeout(meta.destroyTimer);
+        delete meta.destroyTimer;
+    }
+    console.log("increased reference count #"+guid+" -> "+meta.referenceCount);
+};
 
 function generateKey(guid, secret) {
     return guid + ":" + secret;
 }
+
+function _destroy(guid) {
+    console.log("destroying orphaned SharedObject#"+guid);
+    delete metaObjectsDb[guid];
+    delete sharedObjectsDb[generateKey(guid, sharedObjectsDb[guid])];
+    delete sharedObjectsDb[guid];
+}
+
+exports.decRefCount = function(guid) {
+    var meta = metaInfo(guid);
+    --meta.referenceCount;
+    if (meta.referenceCount < 0) {
+        meta.referenceCount = 0;
+    }
+    if (meta.referenceCount === 0) {
+        if (!meta.destroyTimer) {
+            meta.destroyTimer = setTimeout((function(_guid) { return function() { _destroy(_guid); }; })(guid), 6666);
+        }
+    }
+    console.log("decreased reference count #"+guid+" -> "+meta.referenceCount);
+    return meta.referenceCount;
+};
 
 function find(key) {
     return sharedObjectsDb[key];
@@ -23,7 +64,8 @@ function create(key, guid) {
             createdAt: now,
             updatedAt: now
         };
-    sharedObjectsDb[guid] = true;
+    sharedObjectsDb[guid] = key;
+    metaInfo(guid).referenceCount = 0;
     return obj;
 }
 
@@ -50,6 +92,8 @@ exports.findOrCreate = function(guid, secret) {
 };
 
 exports.listAll = function() {
-    return _.select(_.values(sharedObjectsDb), function(o) { return typeof o === 'object'; });
+    return _.select(_.values(sharedObjectsDb), function(o) {
+        return typeof o === 'object' && metaInfo(o.guid).referenceCount > 0;
+    });
 };
 

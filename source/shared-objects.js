@@ -29,6 +29,10 @@ function AuthenticateByGuid(sessionId, guid, secret) {
         found = SharedObjectsDb.findOrCreate(guid, secret);
 
     client.sharedObject = found[0];
+    if (client.sharedObject) {
+        SharedObjectsDb.incRefCount(client.sharedObject.guid);
+    }
+
     return found[1];
 }
 
@@ -73,6 +77,21 @@ function Broadcast(sessionId, state) {
     }
 }
 
+function Destroy(sessionId) {
+    var client = _getClientHandle(sessionId),
+        broadcast = false;
+
+    if (client.sharedObject) {
+        broadcast = 0 === SharedObjectsDb.decRefCount(client.sharedObject.guid);
+    }
+
+    _destroyClientHandle(sessionId);
+
+    if (broadcast) {
+        Broadcast(null, 2);
+    }
+}
+
 function Dispatch(sessionId, data) {
     var broadcast = 0;
 
@@ -95,7 +114,7 @@ function Dispatch(sessionId, data) {
 
 exports.Client = {
     Create: Create,
-    Destroy: _destroyClientHandle
+    Destroy: Destroy  //_destroyClientHandle
 };
 
 exports.Dispatch = Dispatch;

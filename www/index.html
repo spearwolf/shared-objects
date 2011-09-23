@@ -40,9 +40,6 @@
     <script src="shared-objects-client-min.js"></script> 
     <script> 
 
-      //_E.options.debug = true;
-
-      //setTimeout(function() {
         SharedObjects.On({
 
             showInfo: function() {
@@ -55,7 +52,6 @@
 
             destroy: function()  { console.log("SharedObject#" + this.showInfo(), "destroyed"); }
         });
-      //}, 10000);
 
         _E.Module("shared_objects", {
           /*

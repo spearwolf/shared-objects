@@ -12,17 +12,13 @@
 |   +------------------------------+    \    +---------------------------------
 |   | = custom_event.js                  \  /
 |   |                                     \/
-|   | Events
+|   | Public Events
 |   |     - shared_objects/data         (data) raw data recieved from server
 |   |     - shared_objects/connect      (hello) connection to server established
 |   |     - shared_objects/disconnect   () disconnect from server
 |   |     - shared_objects/error        (description) server error response
 |   |     - shared_objects/send         (data) send data to server
 |   |
-|   |     - shared_objects/new/:id      used internally by SharedObjects.On()
-|   |     - shared_objects/update/:id   ..
-|   |     - shared_objects/delete/:id   ..
-|   | 
 |   +--------------------------------------------------------------------------
 |   | = socket.io client
 |   | 
@@ -71,6 +67,8 @@
 |   | Public API
 |   |     - findOrCreate
 |   |     - listAll
+|   |     - incRefCount
+|   |     - decRefCount
 |   | 
 +---+-------------------------------------------------------------------------- 
 
