@@ -3,44 +3,12 @@
  */
 window.SharedObjects = (function(){
 
-    var COOKIE_GUID = "shared_objects_guid",
-        COOKIE_SECRET = "shared_objects_secret";
-
     var E_NAMESPACE = "shared_objects/",
         socket = null,
         current_shared_objects_raw_data = null,
         shared_objects = {},
         isConnected = false,
         nextPrototypeDomain = 0;
-
-    // ========================================================================
-    // http://www.quirksmode.org/js/cookies.html  {{{
-    function createCookie(name,value,days) {
-        var expires = "";
-        if (days) {
-            var date = new Date();
-            date.setTime(date.getTime()+(days*24*60*60*1000));
-            expires = "; expires="+date.toGMTString();
-        }
-        document.cookie = name+"="+value+expires+"; path=/";
-    }
-
-    function readCookie(name) {
-        var nameEQ = name + "=";
-        var c, ca = document.cookie.split(';');
-        for(var i=0;i < ca.length;i++) {
-            c = ca[i];
-            while (c.charAt(0)==' ') c = c.substring(1,c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-        }
-        return null;
-    }
-
-    function eraseCookie(name) {
-        createCookie(name,"",-1);
-    }
-    // }}}
-    // ========================================================================
 
     // ========================================================================
     // http://note19.com/2007/05/27/javascript-guid-generator/  {{{
@@ -53,19 +21,30 @@ window.SharedObjects = (function(){
     // }}}
     // ========================================================================
 
-    var guid = null,  //readCookie(COOKIE_GUID),
-        guid_secret = null;  //readCookie(COOKIE_SECRET);
-    
-    if (!guid) {
-        guid = create_guid();
-        createCookie(COOKIE_GUID, guid);
-        guid_secret = create_guid();
-        createCookie(COOKIE_SECRET, guid_secret);
-        console.log("(new) guid:", guid, "secret:", guid_secret);
-    } else {
-        console.log("(from cookie) guid:", guid, "secret:", guid_secret);
+    function saveGuid(guid, secret) {
+        sessionStorage.setItem("guid", guid);
+        sessionStorage.setItem("secret", secret);
     }
 
+    function loadGuid() {
+        var guid = sessionStorage.getItem("guid"),
+            secret = sessionStorage.getItem("secret");
+        if (typeof guid === 'string' && typeof secret === 'string') {
+            console.log("(from sessionStorage) guid:", guid, "secret:", secret);
+        } else {
+            guid = create_guid();
+            secret = create_guid();
+            saveGuid(guid, secret);
+            console.log("(new) guid:", guid, "secret:", secret);
+        }
+        return [guid, secret];
+    }
+
+    var guid_and_secret = loadGuid();
+
+    var guid = guid_and_secret[0],
+        guid_secret = guid_and_secret[1];
+    
     function update_domain_objects(domain, data, actions) {
         var domain_objects = shared_objects[domain],
             instance = domain_objects[data.guid];
@@ -187,9 +166,8 @@ window.SharedObjects = (function(){
 
         RequestNewId: function() {
             guid = create_guid();
-            createCookie(COOKIE_GUID, guid);
             guid_secret = create_guid();
-            createCookie(COOKIE_SECRET, guid_secret);
+            saveGuid(guid, guid_secret);
             console.log("(new id request) guid:", guid, "secret:", guid_secret);
             // TODO cleanup
             shared_objects = {};
@@ -250,42 +228,7 @@ window.SharedObjects = (function(){
 
                     return p;
                 })());
-            /*
-            {
 
-                'on '+domain+'new ..': function(id, data) {
-                    SharedObj.prototype = typeof extension === 'function' ? new extension(id, data) : extension;
-                    var so = new SharedObj();
-                    so.id = id;
-                    so.data = data;
-                    so.owner = id === guid;
-                    shared_objects_extended[id] = so;
-                    if (typeof so.create === 'function') {
-                        so.create();
-                    }
-                },
-
-                'on '+domain+'update ..': function(id, data) {
-                    var so = shared_objects_extended[id];
-                    if (so) {
-                        so.data = data;
-                        if (typeof so.update === 'function') {
-                            so.update();
-                        }
-                    }
-                },
-
-                'on '+domain+'delete ..': function(id) {
-                    var so = shared_objects_extended[id];
-                    if (so) {
-                        if (typeof so.destroy === 'function') {
-                            so.destroy();
-                        }
-                        delete shared_objects_extended[id];
-                    }
-                }
-            });
-            */
             init_domain(domain);
             return e_mod;
         }
